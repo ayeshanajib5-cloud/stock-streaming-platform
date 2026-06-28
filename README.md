@@ -141,3 +141,21 @@ cd api && source venv/bin/activate && uvicorn main:app --reload --port 8000
 
 Ayesha Najib — Cloud Solutions Architect / DevOps Engineer
 AWS SAA | AWS Security Specialty | Azure Solutions Architect Expert (AZ-305) | Azure Security Engineer (AZ-500) | Azure Administrator (AZ-104) | CompTIA Security+
+
+
+## Live AWS deployment evidence
+
+### EKS cluster running on AWS
+![EKS Cluster Active](eks-cluster-active.png)
+
+### ECR repositories with all three Docker images
+![ECR Repositories](ecr-repositories.png)
+
+### Live API health endpoint on AWS Load Balancer
+![Live API Health](live-api-health.png)
+
+### Swagger docs running live on AWS EKS
+![Swagger Docs Live](swagger-docs-live.png)
+
+### Infrastructure destroyed after screenshots
+![EKS Cluster Destroyed](eks-cluster-destroyed.png)

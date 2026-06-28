@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: stock-producer
-        image: stock-producer:latest
+        image: 504429674609.dkr.ecr.us-east-1.amazonaws.com/stock-producer:latest
         env:
         - name: KAFKA_BOOTSTRAP_SERVERS
           value: "kafka:9092"
