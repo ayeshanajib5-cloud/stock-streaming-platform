@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stock-producer
+  labels:
+    app: stock-producer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: stock-producer
+  template:
+    metadata:
+      labels:
+        app: stock-producer
+    spec:
+      containers:
+      - name: stock-producer
+        image: stock-producer:latest
+        env:
+        - name: KAFKA_BOOTSTRAP_SERVERS
+          value: "kafka:9092"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "50m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"

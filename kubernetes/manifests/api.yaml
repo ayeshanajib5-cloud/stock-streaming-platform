@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stock-api
+  labels:
+    app: stock-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: stock-api
+  template:
+    metadata:
+      labels:
+        app: stock-api
+    spec:
+      containers:
+      - name: stock-api
+        image: stock-api:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: DB_HOST
+          value: "postgres"
+        - name: REDIS_HOST
+          value: "redis"
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_NAME
+          value: "stockdb"
+        - name: DB_USER
+          value: "stockuser"
+        - name: DB_PASSWORD
+          value: "stockpass"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: stock-api
+spec:
+  type: LoadBalancer
+  selector:
+    app: stock-api
+  ports:
+  - port: 80
+    targetPort: 8000

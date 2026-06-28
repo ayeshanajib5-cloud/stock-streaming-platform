@@ -1,0 +1,102 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  AWS_REGION: us-east-1
+  EKS_CLUSTER: stock-streaming-cluster
+
+jobs:
+  build-and-push:
+    name: Build and Push Docker Images
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Build and push stock-producer
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+      run: |
+        docker build -t $ECR_REGISTRY/stock-producer:latest ./producer
+        docker push $ECR_REGISTRY/stock-producer:latest
+
+    - name: Build and push stock-api
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+      run: |
+        docker build -t $ECR_REGISTRY/stock-api:latest ./api
+        docker push $ECR_REGISTRY/stock-api:latest
+
+    - name: Build and push stock-spark
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+      run: |
+        docker build -t $ECR_REGISTRY/stock-spark:latest ./streaming
+        docker push $ECR_REGISTRY/stock-spark:latest
+
+  deploy:
+    name: Deploy to EKS
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.ref == '"refs/heads/main"' && github.event_name == '"push"'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Update kubeconfig
+      run: |
+        aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Update image tags in manifests
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+      run: |
+        sed -i "s|stock-producer:latest|$ECR_REGISTRY/stock-producer:latest|g" kubernetes/manifests/producer.yaml
+        sed -i "s|stock-api:latest|$ECR_REGISTRY/stock-api:latest|g" kubernetes/manifests/api.yaml
+        sed -i "s|stock-spark:latest|$ECR_REGISTRY/stock-spark:latest|g" kubernetes/manifests/spark.yaml
+
+    - name: Deploy to Kubernetes
+      run: |
+        kubectl apply -f kubernetes/manifests/kafka.yaml
+        kubectl apply -f kubernetes/manifests/postgres.yaml
+        kubectl apply -f kubernetes/manifests/redis.yaml
+        kubectl apply -f kubernetes/manifests/producer.yaml
+        kubectl apply -f kubernetes/manifests/spark.yaml
+        kubectl apply -f kubernetes/manifests/api.yaml
+
+    - name: Wait for API deployment
+      run: |
+        kubectl rollout status deployment/stock-api --timeout=120s
+
+    - name: Get API endpoint
+      run: |
+        kubectl get service stock-api

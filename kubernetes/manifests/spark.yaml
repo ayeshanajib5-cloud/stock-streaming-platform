@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stock-spark
+  labels:
+    app: stock-spark
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: stock-spark
+  template:
+    metadata:
+      labels:
+        app: stock-spark
+    spec:
+      containers:
+      - name: stock-spark
+        image: stock-spark:latest
+        env:
+        - name: KAFKA_BOOTSTRAP_SERVERS
+          value: "kafka:9092"
+        - name: DB_HOST
+          value: "postgres"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"

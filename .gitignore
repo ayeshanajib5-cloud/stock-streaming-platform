@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.env
+
+# Terraform
+.terraform/
+.terraform.lock.hcl
+terraform.tfstate
+terraform.tfstate.backup
+
+# Docker
+.docker/
+
+# Mac
+.DS_Store
+
+# Spark
+derby.log
+metastore_db/
+
+# Airflow logs
+airflow/logs/
