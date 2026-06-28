@@ -4,6 +4,8 @@ A production-grade real-time data pipeline that ingests live stock market data, 
 
 ## Architecture
 
+![Architecture](stock_platform_architecture.png)
+
 ```
 Finnhub API → Producer → Apache Kafka → Apache Spark → PostgreSQL → FastAPI → Redis Cache
                                                     ↓
