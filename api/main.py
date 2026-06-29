@@ -20,6 +20,27 @@ def get_connection():
         password=os.getenv("DB_PASSWORD")
     )
 
+
+def serialize_price_row(row):
+    return {
+        "symbol": row[0],
+        "price": row[1],
+        "change": row[2],
+        "change_percent": row[3],
+        "created_at": row[4].isoformat()
+    }
+
+
+def serialize_alert_row(row):
+    return {
+        "symbol": row[0],
+        "price": row[1],
+        "change_percent": row[2],
+        "alert_message": row[3],
+        "created_at": row[4].isoformat()
+    }
+
+
 @app.get("/")
 def root():
     return {"message": "Stock Streaming Analytics API is running"}
@@ -47,13 +68,7 @@ def latest_prices():
 
     result = []
     for row in rows:
-        result.append({
-            "symbol": row[0],
-            "price": row[1],
-            "change": row[2],
-            "change_percent": row[3],
-            "created_at": row[4].isoformat()
-        })
+        result.append(serialize_price_row(row))
 
     redis_client.setex("latest_prices", 10, json.dumps(result))
 
@@ -76,13 +91,7 @@ def stock_history(symbol: str):
 
     result = []
     for row in rows:
-        result.append({
-            "symbol": row[0],
-            "price": row[1],
-            "change": row[2],
-            "change_percent": row[3],
-            "created_at": row[4].isoformat()
-        })
+        result.append(serialize_price_row(row))
     return result
 
 @app.get("/alerts/recent")
@@ -101,11 +110,5 @@ def recent_alerts():
 
     result = []
     for row in rows:
-        result.append({
-            "symbol": row[0],
-            "price": row[1],
-            "change_percent": row[2],
-            "alert_message": row[3],
-            "created_at": row[4].isoformat()
-        })
+        result.append(serialize_alert_row(row))
     return result

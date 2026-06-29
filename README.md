@@ -41,6 +41,7 @@ Finnhub API → Producer → Apache Kafka → Apache Spark → PostgreSQL → Fa
 - **Data quality monitoring** — Airflow checks data freshness every 15 minutes
 - **Health probes** — Kubernetes liveness and readiness probes on all services
 - **Auto-scaling** — EKS node group scales between 1 and 4 worker nodes
+- **Automated tests** — CI validates API contracts and producer event normalization before deployment
 
 ## Project Structure
 
@@ -136,6 +137,16 @@ spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.13:4.1.2,org.pos
 ```bash
 cd api && source venv/bin/activate && uvicorn main:app --reload --port 8000
 ```
+
+### Run tests
+```bash
+python -m pip install -r requirements-dev.txt
+PYTHONPATH="$PWD" pytest -q
+```
+
+## CI/CD Quality Gate
+
+GitHub Actions runs the Python test suite before Docker images are built and pushed. The deploy job only runs on pushes to `main`, after the test and image build jobs succeed.
 
 ## Author
 
